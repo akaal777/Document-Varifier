@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Document Verifier</title>
+    <style>
+        :root {
+            --primary: #f59e0b; /* Solar Yellow/Orange */
+            --primary-hover: #d97706;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--text-dark);
+        }
+
+        .lang-btn {
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .lang-btn:hover { background: #374151; }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checkbox-wrapper:hover {
+            background: #f9fafb;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            margin-top: 4px;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
+        .section-title {
+            margin: 24px 0 12px 0;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 24px;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        #flashCard {
+            display: none;
+        }
+
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 16px;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 20px;
+        }
+
+        .customer-details p {
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .status-list {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .status-list li {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-yes { background: #d1fae5; color: var(--success); }
+        .status-no { background: #fee2e2; color: var(--danger); }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+        }
+
+        .btn-edit { background: var(--text-light); }
+        .btn-download { background: var(--text-dark); }
+        .btn-wa { background: #25D366; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #flashCard, #flashCard * { visibility: visible; }
+            #flashCard { position: absolute; left: 0; top: 0; width: 100%; padding: 0; box-shadow: none; }
+            .action-buttons, header { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1 id="appTitle">Solar Document Verifier</h1>
+        <button class="lang-btn" id="langBtn" onclick="toggleLanguage()">Switch to ਪੰਜਾਬੀ</button>
+    </header>
+
+    <!-- Input Form -->
+    <form id="inputForm" onsubmit="generateCard(event)">
+        <div class="form-group">
+            <label id="lblName">Customer Name <span style="color:red">*</span></label>
+            <input type="text" id="custName" required placeholder="Enter valid name">
+        </div>
+
+        <div class="form-group">
+            <label id="lblAddress">Address <span style="color:red">*</span></label>
+            <textarea id="custAddress" rows="3" required placeholder="Enter full address"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label id="lblMobile">Mobile Number <span style="color:red">*</span></label>
+            <input type="number" id="custMobile" required placeholder="10 digit mobile number" oninput="if(this.value.length > 10) this.value = this.value.slice(0, 10);">
+        </div>
+
+        <h3 class="section-title" id="lblDocs">Document Checklist</h3>
+        <div class="checklist-grid" id="checklistContainer">
+            <!-- Checkboxes generated via JS -->
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnSubmit">Generate Flash Card</button>
+    </form>
+
+    <!-- Flash Card Output -->
+    <div id="flashCard">
+        <div class="card-header">
+            <h2 id="cardTitle">Customer Document Status</h2>
+        </div>
+        
+        <div class="customer-details">
+            <p><strong id="cNameLbl">Name:</strong> <span id="outName"></span></p>
+            <p><strong id="cAddrLbl">Address:</strong> <span id="outAddress"></span></p>
+            <p><strong id="cMobLbl">Mobile:</strong> <span id="outMobile"></span></p>
+        </div>
+
+        <h3 class="section-title" id="cardDocsTitle">Provided Documents</h3>
+        <ul class="status-list" id="outputList">
+            <!-- Status list generated via JS -->
+        </ul>
+
+        <div class="action-buttons">
+            <button type="button" class="btn-edit" id="btnEdit" onclick="editForm()">Edit Data</button>
+            <button type="button" class="btn-download" id="btnDownload" onclick="window.print()">Download / Print PDF</button>
+            <button type="button" class="btn-wa" id="btnWA" onclick="sendWhatsApp()">Send to WhatsApp</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Language Dictionary
+    const translations = {
+        en: {
+            title: "Solar Document Verifier",
+            switchBtn: "Switch to ਪੰਜਾਬੀ",
+            lblName: "Customer Name",
+            lblAddress: "Address",
+            lblMobile: "Mobile Number",
+            lblDocs: "Document Checklist",
+            btnSubmit: "Generate Flash Card",
+            cardTitle: "Customer Document Status",
+            cNameLbl: "Name:",
+            cAddrLbl: "Address:",
+            cMobLbl: "Mobile:",
+            cardDocsTitle: "Document Verification Status",
+            btnEdit: "Edit Data",
+            btnDownload: "Download / Print PDF",
+            btnWA: "Send to WhatsApp",
+            statusYes: "Provided",
+            statusNo: "Pending",
+            docs: [
+                "Aadhar card", "Pan card", "Email ID", "Phone no", 
+                "Electricity bill", "Cancelled cheque", "Bank Passbook", 
+                "Panchayat Letter - For Ownership", "Signature", 
+                "Before Solar Install Geo tag Photo", 
+                "Optional Co-Applicant Document Aadhar card", 
+                "Co-Applicant Document Pan card"
+            ]
+        },
+        pa: {
+            title: "ਸੋਲਰ ਦਸਤਾਵੇਜ਼ ਪ੍ਰਮਾਣਕ",
+            switchBtn: "Switch to English",
+            lblName: "ਗਾਹਕ ਦਾ ਨਾਮ",
+            lblAddress: "ਪਤਾ",
+            lblMobile: "ਮੋਬਾਈਲ ਨੰਬਰ",
+            lblDocs: "ਦਸਤਾਵੇਜ਼ ਸੂਚੀ",
+            btnSubmit: "ਫਲੈਸ਼ ਕਾਰਡ ਬਣਾਓ",
+            cardTitle: "ਗਾਹਕ ਦਸਤਾਵੇਜ਼ ਸਥਿਤੀ",
+            cNameLbl: "ਨਾਮ:",
+            cAddrLbl: "ਪਤਾ:",
+            cMobLbl: "ਮੋਬਾਈਲ:",
+            cardDocsTitle: "ਦਸਤਾਵੇਜ਼ ਤਸਦੀਕ ਸਥਿਤੀ",
+            btnEdit: "ਡਾਟਾ ਸੋਧੋ",
+            btnDownload: "ਪੀਡੀਐਫ ਡਾਊਨਲੋਡ/ਪ੍ਰਿੰਟ ਕਰੋ",
+            btnWA: "ਵਟਸਐਪ 'ਤੇ ਭੇਜੋ",
+            statusYes: "ਪ੍ਰਦਾਨ ਕੀਤਾ",
+            statusNo: "ਬਕਾਇਆ ਹੈ",
+            docs: [
+                "ਆਧਾਰ ਕਾਰਡ", "ਪੈਨ ਕਾਰਡ", "ਈਮੇਲ ਆਈਡੀ", "ਫੋਨ ਨੰਬਰ", 
+                "ਬਿਜਲੀ ਦਾ ਬਿੱਲ", "ਰੱਦ ਕੀਤਾ ਚੈੱਕ", "ਬੈਂਕ ਪਾਸਬੁੱਕ", 
+                "ਪੰਚਾਇਤ ਪੱਤਰ - ਮਾਲਕੀ ਲਈ", "ਦਸਤਖਤ", 
+                "ਸੋਲਰ ਲਗਾਉਣ ਤੋਂ ਪਹਿਲਾਂ ਦੀ ਜੀਓ ਟੈਗ ਫੋਟੋ", 
+                "ਸਹਿ-ਬਿਨੈਕਾਰ ਦਾ ਆਧਾਰ ਕਾਰਡ (ਵਿਕਲਪਿਕ)", 
+                "ਸਹਿ-ਬਿਨੈਕਾਰ ਦਾ ਪੈਨ ਕਾਰਡ (ਵਿਕਲਪਿਕ)"
+            ]
+        }
+    };
+
+    let currentLang = 'en';
+
+    function renderCheckboxes() {
+        const container = document.getElementById('checklistContainer');
+        container.innerHTML = '';
+        translations[currentLang].docs.forEach((doc, index) => {
+            const wrapper = document.createElement('label');
+            wrapper.className = 'checkbox-wrapper';
+            wrapper.innerHTML = `
+                <input type="checkbox" id="doc_${index}" value="${index}">
+                <span>${doc}</span>
+            `;
+            container.appendChild(wrapper);
+        });
+    }
+
+    function toggleLanguage() {
+        currentLang = currentLang === 'en' ? 'pa' : 'en';
+        const t = translations[currentLang];
+        
+        document.getElementById('appTitle').innerText = t.title;
+        document.getElementById('langBtn').innerText = t.switchBtn;
+        document.getElementById('lblName').innerHTML = `${t.lblName} <span style="color:red">*</span>`;
+        document.getElementById('lblAddress').innerHTML = `${t.lblAddress} <span style="color:red">*</span>`;
+        document.getElementById('lblMobile').innerHTML = `${t.lblMobile} <span style="color:red">*</span>`;
+        document.getElementById('lblDocs').innerText = t.lblDocs;
+        document.getElementById('btnSubmit').innerText = t.btnSubmit;
+        document.getElementById('cardTitle').innerText = t.cardTitle;
+        document.getElementById('cNameLbl').innerText = t.cNameLbl;
+        document.getElementById('cAddrLbl').innerText = t.cAddrLbl;
+        document.getElementById('cMobLbl').innerText = t.cMobLbl;
+        document.getElementById('cardDocsTitle').innerText = t.cardDocsTitle;
+        document.getElementById('btnEdit').innerText = t.btnEdit;
+        document.getElementById('btnDownload').innerText = t.btnDownload;
+        document.getElementById('btnWA').innerText = t.btnWA;
+
+        const checkedStates = {};
+        translations.en.docs.forEach((_, i) => {
+            const cb = document.getElementById(`doc_${i}`);
+            if(cb) checkedStates[i] = cb.checked;
+        });
+        
+        renderCheckboxes();
+        
+        translations.en.docs.forEach((_, i) => {
+            const cb = document.getElementById(`doc_${i}`);
+            if(cb && checkedStates[i]) cb.checked = true;
+        });
+    }
+
+    function generateCard(e) {
+        e.preventDefault();
+        
+        const mobile = document.getElementById('custMobile').value;
+        if(mobile.length !== 10) {
+            alert(currentLang === 'en' ? "Please enter exactly 10 digits for mobile number." : "ਕਿਰਪਾ ਕਰਕੇ ਮੋਬਾਈਲ ਨੰਬਰ ਲਈ ਬਿਲਕੁਲ 10 ਅੰਕ ਦਾਖਲ ਕਰੋ।");
+            return;
+        }
+
+        document.getElementById('outName').innerText = document.getElementById('custName').value;
+        document.getElementById('outAddress').innerText = document.getElementById('custAddress').value;
+        document.getElementById('outMobile').innerText = mobile;
+
+        const ul = document.getElementById('outputList');
+        ul.innerHTML = '';
+        const t = translations[currentLang];
+        
+        t.docs.forEach((docName, index) => {
+            const isChecked = document.getElementById(`doc_${index}`).checked;
+            const statusClass = isChecked ? 'status-yes' : 'status-no';
+            const statusText = isChecked ? t.statusYes : t.statusNo;
+            const listIcon = isChecked ? '✅' : '❌';
+            
+            ul.innerHTML += `
+                <li>
+                    <span>${docName}</span>
+                    <span class="status-badge ${statusClass}">${listIcon} ${statusText}</span>
+                </li>
+            `;
+        });
+
+        document.getElementById('inputForm').style.display = 'none';
+        document.getElementById('flashCard').style.display = 'block';
+    }
+
+    function editForm() {
+        document.getElementById('flashCard').style.display = 'none';
+        document.getElementById('inputForm').style.display = 'block';
+    }
+
+    // Updated Send to WhatsApp Function
+    function sendWhatsApp() {
+        const name = document.getElementById('outName').innerText;
+        const address = document.getElementById('outAddress').innerText;
+        const mobile = document.getElementById('outMobile').innerText;
+        const t = translations[currentLang];
+
+        // Creating the message header
+        let msg = `☀️ *${t.cardTitle}* ☀️\n\n`;
+        msg += `👤 *${t.cNameLbl}* ${name}\n`;
+        msg += `🏠 *${t.cAddrLbl}* ${address}\n`;
+        msg += `📱 *${t.cMobLbl}* ${mobile}\n\n`;
+        msg += `📋 *${t.cardDocsTitle}:*\n\n`;
+
+        // Looping through documents to append (Provided) or (Not Provided)
+        t.docs.forEach((docName, index) => {
+            const isChecked = document.getElementById(`doc_${index}`).checked;
+            
+            // Logic for brackets
+            const statusText = isChecked 
+                ? (currentLang === 'en' ? "(Provided)" : "(ਪ੍ਰਦਾਨ ਕੀਤਾ)") 
+                : (currentLang === 'en' ? "(Not Provided)" : "(ਬਕਾਇਆ ਹੈ)");
+            
+            const icon = isChecked ? '✅' : '❌';
+            
+            // Format: ✅ Aadhar card (Provided)
+            msg += `${icon} ${docName} ${statusText}\n`;
+        });
+        
+        msg += `\n*PM Surya Ghar Solar Rooftop*`;
+
+        const encodedMsg = encodeURIComponent(msg);
+        const url = `https://wa.me/91${mobile}?text=${encodedMsg}`;
+        window.open(url, '_blank');
+    }
+
+    renderCheckboxes();
+</script>
+
+</body>
+</html>
